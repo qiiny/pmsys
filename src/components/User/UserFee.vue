@@ -4,113 +4,151 @@
       <el-card shadow="hover">
         <span>电费</span>
         <el-table
-            :data="tableData"
+            :data="fee_power"
             style="width: 100%">
           <el-table-column
-              prop="date"
+              prop="paymonth"
               label="日期"
               width="180">
           </el-table-column>
           <el-table-column
-              prop="type"
-              label="费用类型"
-              width="180">
-          </el-table-column>
-          <el-table-column
-              prop="num"
+              prop="powernum"
               label="仪表读数">
           </el-table-column>
           <el-table-column
-              prop="money"
+              prop="paymoney"
               label="金额">
           </el-table-column>
           <el-table-column
-              prop="pay"
+              prop="ispay"
               label="是否缴费">
+            <template slot-scope="scope">
+              {{ scope.row.ispay == 0 ? "尚未缴费" : "已缴费" }}
+            </template>
           </el-table-column>
           <el-table-column
               prop="cuozuo"
               label="操作"
               width="180">
-            <el-button>缴费</el-button>
+            <template slot-scope="scope">
+              <el-button  @click="pay(scope.row.paymoney)" v-if="scope.row.ispay!=1?true:false">缴费</el-button>
+            </template>
           </el-table-column>
         </el-table>
+        <div style="float: right;margin: 5px 15px">
+          <el-pagination
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+              :current-page="queryInfo.pageNum"
+              :page-sizes="[1, 3, 5, 10]"
+              :page-size="queryInfo.pageSize"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="power_total">
+          </el-pagination>
+        </div>
       </el-card>
       <el-card shadow="hover">
         <span>水费</span>
         <el-table
-            :data="tableData1"
+            :data="fee_water"
             style="width: 100%">
           <el-table-column
-              prop="date"
+              prop="paymonth"
               label="日期"
-              width="180">
+              width="180" :formatter="setDate">
           </el-table-column>
           <el-table-column
-              prop="type"
-              label="费用类型"
-              width="180">
-          </el-table-column>
-          <el-table-column
-              prop="num"
+              prop="waternum"
               label="仪表读数">
           </el-table-column>
           <el-table-column
-              prop="money"
+              prop="paymoney"
               label="金额">
           </el-table-column>
           <el-table-column
-              prop="pay"
+              prop="ispay"
               label="是否缴费">
+            <template slot-scope="scope">
+              {{ scope.row.ispay != 1 ? "尚未缴费" : "已缴费" }}
+            </template>
           </el-table-column>
           <el-table-column
               prop="cuozuo"
               label="操作"
               width="180">
-            <el-button>缴费</el-button>
+            <template  slot-scope="scope">
+              <el-button  @click="pay(scope.row.paymoney) v-if="scope.row.ispay!=1?true:false">缴费</el-button>
+            </template>
           </el-table-column>
         </el-table>
+        <div style="float: right;margin: 5px 15px">
+          <el-pagination
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+              :current-page="queryInfo.pageNum"
+              :page-sizes="[1, 3, 5, 10]"
+              :page-size="queryInfo.pageSize"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="water_total">
+          </el-pagination>
+        </div>
       </el-card>
       <el-card shadow="hover">
         <span>物业费</span>
         <el-table
-            :data="tableData2"
+            :data="fee_property"
             style="width: 100%">
           <el-table-column
-              prop="date"
+              prop="paymonth"
               label="日期"
               width="180">
           </el-table-column>
           <el-table-column
-              prop="type"
-              label="费用类型"
-              width="180">
+              prop="house"
+              label="单位">
+            <template slot-scope="scope">
+              {{ scope.row.owner.houses.housename }}
+            </template>
           </el-table-column>
           <el-table-column
-              prop="num"
-              label="仪表读数">
-          </el-table-column>
-          <el-table-column
-              prop="money"
+              prop="paymoney"
               label="金额">
           </el-table-column>
           <el-table-column
-              prop="pay"
+              prop="ispay"
               label="是否缴费">
+            <template slot-scope="scope">
+              {{ scope.row.ispay != 1 ? "尚未缴费" : "已缴费" }}
+            </template>
           </el-table-column>
           <el-table-column
               prop="cuozuo"
               label="操作"
               width="180">
-            <el-button>缴费</el-button>
+            <template slot-scope="scope">
+              <el-button  @click="pay(scope.row.paymoney)" v-if="scope.row.ispay!=1?true:false">缴费</el-button>
+            </template>
+
           </el-table-column>
         </el-table>
+        <div style="float: right;margin: 5px 15px">
+          <el-pagination
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+              :current-page="queryInfo.pageNum"
+              :page-sizes="[1, 3, 5, 10]"
+              :page-size="queryInfo.pageSize"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="water_total">
+          </el-pagination>
+        </div>
       </el-card>
     </template>
     <el-dialog :visible.sync="DialogVisible" width="400px">
       <el-card style="text-align: center;font-size: 24px">
-        <span >收款￥55元</span>
+        <span>收款￥{{ money }}元</span>
         <img :src="require('@/assets/images/pay.png')" width="320" height="480">
+        <el-button @click="pay(0)">已支付</el-button>
       </el-card>
     </el-dialog>
   </div>
@@ -118,37 +156,91 @@
 
 <script>
 export default {
+  created() {
+    this.getFeePowerList(),
+    this.getFeeWaterList(),
+    this.getFeeProperty()
+  },
   data() {
     return {
-      DialogVisible:true,
-      tableData: [{
-        date: '2022-03',
-        type: '电费',
-        num: '55',
-        money:"55",
-        pay:"否",
-      }],
-      tableData1: [{
-        date: '2022-03',
-        type: '水费',
-        num: '10',
-        money:"20",
-        pay:"否",
-      }],
-      tableData2: [{
-        date: '2022-03',
-        type: '物业',
-        num: '无',
-        money:"1000",
-        pay:"否",
-      }],
+      DialogVisible: false,
+      fee_power: [],
+      fee_water: [],
+      fee_property: [],
+      power_total: "",
+      water_total: "",
+      property_total: "",
+      money:"",
+      //查询实体
+      queryInfo: {
+        ownerid: "",
+        PayMonth: "",
+        pageNum: 1,
+        pageSize: 5,
+        isPay: false
+      },
     }
+  },
+  methods: {
+    pay(money){
+      this.money=money
+      this.DialogVisible = !this.DialogVisible;
+      if (money==0){
+
+      }
+    },
+    async getFeePowerList() {
+      var user= window.sessionStorage.getItem("user")
+      this.queryInfo.ownerid=user
+      let {data: res} = await this.$http.get("feePower", {params: this.queryInfo})
+      this.fee_power = res.data;
+      this.power_total = res.numbers;
+      console.log(this.power_total)
+    },
+    async getFeeWaterList() {
+      let {data: res} = await this.$http.get("feeWater", {params: this.queryInfo})
+      this.fee_water = res.data;
+      this.water_total = res.numbers;
+    },
+    async getFeeProperty() {
+      let {data: res} = await this.$http.get("feeProperty", {params: this.queryInfo})
+      this.fee_property = res.data;
+      this.property_total = res.numbers;
+    },
+    setDate(row, column) {
+      var date = row[column.property];
+      if (date == undefined) {
+        return "";
+      }
+      return this.$moment(date).format("YYYY-MM-DD");
+    },
+    //最大数
+    handleSizeChange(newSize) {
+      this.queryInfo.pageSize = newSize;
+      this.getUserList();
+    },
+    //pageNum触发动作
+    handleCurrentChange(newPage) {
+      this.queryInfo.pageNum = newPage;
+      this.getUserList();
+    },
+    async userStateChange(userInfo) {
+      let formData = new FormData();
+      formData.append("userid", userInfo.userid);
+      formData.append("status", userInfo.status);
+      let {data: res} = await this.$http.put("user/status", formData)
+      if (res !== "success") {
+        userInfo.id = !userInfo.id;
+        return this.$message.error("修改失败")
+      }
+      this.$message.success("修改成功")
+    },
   }
 }
 </script>
 
 <style scoped lang="less">
-.el-card{
+.el-card {
   border-radius: 15px;
   margin-bottom: 20px;
 }

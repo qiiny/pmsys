@@ -248,12 +248,9 @@ export default {
   methods: {
     //获取所有用户
     async getUserList() {
-      console.log(123 + this.queryInfo.PayMonth)
-      // let {data: res} = await this.$http.get("feeWater?ownerId="+this.queryInfo.ownerid+"&PayMonth="+this.queryInfo.PayMonth+"&pageNum="+this.queryInfo.pageNum+"&pageSize="+this.queryInfo.pageSize)
       let {data: res} = await this.$http.get("feeWater", {params: this.queryInfo})
       this.fee_water = res.data;
       this.total = res.numbers;
-      console.log(123 + this.queryInfo.PayMonth)
     },
     async getAllOwner() {
       let {data: res} = await this.$http.get("owner/list", {params: this.queryInfo})
@@ -343,6 +340,7 @@ export default {
       this.editForm.remarks = res.remarks,
       this.editForm.paymonth = res.paymonth.format("yyyy-MM-dd")
     },
+
   }
 }
 </script>

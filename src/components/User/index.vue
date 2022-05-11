@@ -41,21 +41,27 @@
       </div>
       <el-card shadow="hover">
         <el-table
-            :data="tableData"
+            :data="fee_property"
             style="width: 100%">
           <el-table-column
-              prop="date"
+              prop="paymonth"
               label="日期"
               width="180">
           </el-table-column>
           <el-table-column
-              prop="name"
+              prop="ownerid"
               label="姓名"
               width="180">
+            <template slot-scope="scope">
+              {{ scope.row.owner.ownername }}
+            </template>
           </el-table-column>
           <el-table-column
-              prop="address"
+              prop="house"
               label="地址">
+            <template slot-scope="scope">
+              {{ scope.row.owner.houses.housename }}
+            </template>
           </el-table-column>
           <el-table-column
               prop="cuozuo"
@@ -74,6 +80,7 @@
 export default {
   created() {
     this.getAllNotice()
+    this.getFeeList()
   },
   data(){
     return{
@@ -83,6 +90,8 @@ export default {
         require("@/assets/images/h3.jpeg"),
       ],
       noticeList:"",
+      fee_property:[],
+      total: 0,
       queryInfo: {
         noticeTitle: "",
         pageNum: 1,
@@ -94,6 +103,13 @@ export default {
     async getAllNotice() {
       let {data: res} = await this.$http.get("notice", {params: this.queryInfo})
       this.noticeList = res.data;
+    },
+    //获取所有用户
+    async getFeeList() {
+      // let {data: res} = await this.$http.get("feeWater?ownerId="+this.queryInfo.ownerid+"&PayMonth="+this.queryInfo.PayMonth+"&pageNum="+this.queryInfo.pageNum+"&pageSize="+this.queryInfo.pageSize)
+      let {data: res} = await this.$http.get("feeProperty", {params: this.queryInfo})
+      this.fee_property = res.data;
+      this.total = res.numbers;
     },
   }
 }

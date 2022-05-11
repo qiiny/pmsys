@@ -61,7 +61,7 @@ export default {
         if(this.radio==2){
           const {data: res} = await this.$http.post("admin/login", this.loginForm);
           if (res.flag === "ok") {
-            window.sessionStorage.setItem("user", res.admin)
+            window.sessionStorage.setItem("admin", res.admin)
             this.$message.success("登录成功")
             await this.$router.push({path: "/user"})
           } else {
@@ -71,7 +71,8 @@ export default {
         else {
           const {data: res} = await this.$http.post("user/login", this.loginForm);
           if (res.flag === "ok") {
-            window.sessionStorage.setItem("user", res.user)
+            console.log(res.user)
+            window.sessionStorage.setItem("user", res.user.ownerid)
             this.$message.success("登录成功")
             await this.$router.push({path: "/index"})
           } else {

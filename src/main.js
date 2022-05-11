@@ -9,7 +9,6 @@ import 'quill/dist/quill.snow.css' // for snow theme
 import 'quill/dist/quill.bubble.css' // for bubble theme
 
 Vue.use(VueQuillEditor)
-
 import './plugins/element.js'
 //添加样式
 import './assets/css/global.css'
@@ -21,7 +20,6 @@ import axios from "axios";
 Vue.prototype.$http=axios
 //设置访问根路径
 axios.defaults.baseURL="http://localhost:9000"
-
 Vue.prototype.$moment = Moment
 Vue.config.productionTip = false
 
