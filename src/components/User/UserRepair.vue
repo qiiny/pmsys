@@ -6,9 +6,11 @@
           :data="repairList"
           style="width: 100%">
         <el-table-column
-            prop="date"
+            prop="createtime"
             label="报修时间"
-            width="180">
+            width="180"
+            :formatter="setDate"
+        >
         </el-table-column>
         <el-table-column
             prop="place"
@@ -16,19 +18,43 @@
             width="180">
         </el-table-column>
         <el-table-column
-            prop="repaieTime"
-            label="维修时间">
+            prop="repairtime"
+            label="维修时间"
+            width="180"
+            :formatter="setDate"
+        >
         </el-table-column>
         <el-table-column
-            prop="cuozuo"
+            prop="remarks"
+            label="详细信息">
+        </el-table-column>
+        <el-table-column
+            prop="isrepair"
             label="状态"
             width="180">
+          <template slot-scope="scope">
+            <el-switch :active-value="1"
+                       active-text="已维修"
+                       inactive-text="尚未维修"
+                       :inactive-value="0" v-model="scope.row.isrepair" @change="userStateChange(scope.row)"></el-switch>
+          </template>
         </el-table-column>
       </el-table>
+      <div style="float: right;margin: 5px 15px">
+        <el-pagination
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            :current-page="queryInfo.pageNum"
+            :page-sizes="[1, 3, 5, 10]"
+            :page-size="queryInfo.pageSize"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="total">
+        </el-pagination>
+      </div>
     </el-card>
     <el-card style="margin-top: 15px" shadow="hover">
-      <el-form ref="form" :model="form" label-width="80px">
-        <el-form-item label="报修类型">
+      <el-form ref="addFormRules" :model="form" label-width="80px"  :rules="addFormRules">
+        <el-form-item label="报修类型" prop="repairtype">
           <el-select v-model="form.repairtype" clearable filterable placeholder="请选择" style="width: 50%">
             <el-option value="0" label="电类(电线点灯空调等电器电路问题)"/>
             <el-option value="1" label="水类(水管水龙头燃气管等问题)"/>
@@ -36,7 +62,7 @@
           </el-select>
         </el-form-item>
         <div style="display: flex">
-          <el-form-item label="楼栋" prop="place">
+          <el-form-item label="楼栋" prop="buildingid">
             <el-select label="楼栋" v-model="form.buildingid" clearable placeholder="请选择" style="width:100%">
               <el-option
                   v-for="item in building"
@@ -46,7 +72,7 @@
               </el-option>
             </el-select>
           </el-form-item>
-          <el-form-item label="门牌" prop="place">
+          <el-form-item label="门牌" prop="houseid">
             <el-select label="门牌" v-model="form.houseid"
                        clearable placeholder="请选择" style="width:100%"
                        @click.native="getHouse(form.buildingid)">
@@ -75,9 +101,8 @@
             v-model="form.remarks">
         </el-input>
         </el-form-item>
-
         <el-form-item>
-          <el-button type="primary" @click="onSubmit">立即报修</el-button>
+          <el-button type="primary" @click="addRepair">立即报修</el-button>
           <el-button>取消</el-button>
         </el-form-item>
       </el-form>
@@ -89,15 +114,19 @@
 export default {
   created() {
     this.getBuilding()
+    this.getRepairList()
   },
   data() {
     return {
-      repairList: [{
-        date:"2022-02-16",
-        place:"A栋A301 测试水龙头坏了",
-        repaieTime:"2022-3-16",
-        cuozuo:"已维修"
-      }],
+      repairList: "",
+      total:"",
+      //查询实体
+      queryInfo: {
+        createtime: "",
+        ownerid: window.sessionStorage.getItem("user"),
+        pageNum: 1,
+        pageSize: 5,
+      },
       form: {
         repairtype: '',
         ownerid: '',
@@ -108,7 +137,23 @@ export default {
         houseid: "",
       },
       building: "",
-      house: ""
+      house: "",
+      addFormRules: {
+        // place: [
+        //   {required: true, message: "请输入业主名称", trigger: 'blur'},
+        //   {min: 2, max: 15, message: "请输入2到15个字符", trigger: "blur"}
+        // ],
+        buildingid: [
+          { required: true, message: '请选择楼栋', trigger: 'change' }
+        ],
+        houseid: [
+          { required: true, message: '请选择单位', trigger: 'change' }
+        ],
+        repairtype: [
+          { required: true, message: '类型', trigger: 'change' }
+        ],
+
+      }
     }
   },
   methods: {
@@ -126,10 +171,56 @@ export default {
       this.form.place=this.form.buildingid.slice(1)+"-"+this.form.houseid+"-"+this.form.place
       console.log(this.form)
     },
-    getRepairList(){
-
-    }
-
+    //获取所有用户
+    async getRepairList() {
+      let {data: res} = await this.$http.get("repair", {params: this.queryInfo})
+      this.repairList = res.data;
+      console.log(this.repairList)
+      this.total = res.numbers;
+    },
+    setDate(row, column) {
+      var date = row[column.property];
+      if (date == undefined) {
+        return "";
+      }
+      return this.$moment(date).format("YYYY-MM-DD");
+    },
+    addRepair(){
+      let user = window.sessionStorage.getItem("user")
+      this.form.ownerid = user
+      this.form.place=this.form.buildingid+"-"+this.form.houseid+"-"+this.form.place
+      this.$refs.addFormRules.validate(async valid => {
+        if (!valid) return;
+        let {data: res} = await this.$http.post("repair", this.form);
+        if (res !== "success") {
+          return this.$message.error("修改失败");
+        }
+        this.$message.success("修改成功")
+        this.form=[]
+        await this.getRepairList();
+      })
+    },
+    async userStateChange(userInfo) {
+      let formData = new FormData();
+      formData.append("userid", userInfo.repairid);
+      formData.append("status", userInfo.isrepair);
+      let {data: res} = await this.$http.put("user/status", formData)
+      if (res !== "success") {
+        userInfo.id = !userInfo.id;
+        return this.$message.error("修改失败")
+      }
+      this.$message.success("修改成功")
+    },
+    //最大数
+    handleSizeChange(newSize) {
+      this.queryInfo.pageSize = newSize;
+      this.getUserList();
+    },
+    //pageNum触发动作
+    handleCurrentChange(newPage) {
+      this.queryInfo.pageNum = newPage;
+      this.getUserList();
+    },
   }
 }
 </script>

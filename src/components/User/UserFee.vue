@@ -31,7 +31,7 @@
               label="操作"
               width="180">
             <template slot-scope="scope">
-              <el-button  @click="pay(scope.row.paymoney)" v-if="scope.row.ispay!=1?true:false">缴费</el-button>
+              <el-button @click="pay(scope.row,1)" v-if="scope.row.ispay!=1?true:false">缴费</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -76,8 +76,8 @@
               prop="cuozuo"
               label="操作"
               width="180">
-            <template  slot-scope="scope">
-              <el-button  @click="pay(scope.row.paymoney) v-if="scope.row.ispay!=1?true:false">缴费</el-button>
+            <template slot-scope="scope">
+              <el-button @click="pay(scope.row,2)" v-if="scope.row.ispay!=1?true:false">缴费</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -126,7 +126,7 @@
               label="操作"
               width="180">
             <template slot-scope="scope">
-              <el-button  @click="pay(scope.row.paymoney)" v-if="scope.row.ispay!=1?true:false">缴费</el-button>
+              <el-button @click="pay(scope.row,3)" v-if="scope.row.ispay!=1?true:false">缴费</el-button>
             </template>
 
           </el-table-column>
@@ -146,9 +146,9 @@
     </template>
     <el-dialog :visible.sync="DialogVisible" width="400px">
       <el-card style="text-align: center;font-size: 24px">
-        <span>收款￥{{ money }}元</span>
+        <span>收款￥{{ fee.paymoney }}元</span>
         <img :src="require('@/assets/images/pay.png')" width="320" height="480">
-        <el-button @click="pay(0)">已支付</el-button>
+        <el-button @click="pay(0,0)">已支付</el-button>
       </el-card>
     </el-dialog>
   </div>
@@ -158,8 +158,8 @@
 export default {
   created() {
     this.getFeePowerList(),
-    this.getFeeWaterList(),
-    this.getFeeProperty()
+        this.getFeeWaterList(),
+        this.getFeeProperty()
   },
   data() {
     return {
@@ -170,7 +170,8 @@ export default {
       power_total: "",
       water_total: "",
       property_total: "",
-      money:"",
+      fee: "",
+      type: "",
       //查询实体
       queryInfo: {
         ownerid: "",
@@ -182,16 +183,47 @@ export default {
     }
   },
   methods: {
-    pay(money){
-      this.money=money
-      this.DialogVisible = !this.DialogVisible;
-      if (money==0){
+    async pay(money, type) {
 
+      this.DialogVisible = !this.DialogVisible;
+      if (money == 0) {
+        switch (this.type) {
+          case 1:
+            let {data: power} = await this.$http.get("feePower/status?id=" + this.fee.powerid)
+            if (power !== "success") {
+              return this.$message.error("修改失败")
+            }
+            this.$message.success("修改成功")
+            await this.getFeePowerList()
+            break;
+          case 2:
+            let {data: water} = await this.$http.get("feeWater/status?id=" + this.fee.waterid)
+            console.log(water)
+            if (water !== "success") {
+              return this.$message.error("修改失败")
+            }
+            this.$message.success("修改成功")
+            await this.getFeeWaterList()
+            break;
+          case 3:
+            let {data: property} = await this.$http.get("feeProperty/status?id=" + this.fee.propertyid)
+            if (property !== "success") {
+              return this.$message.error("修改失败")
+            }
+            this.$message.success("修改成功")
+            await this.getFeeProperty()
+            break;
+          default:
+            break;
+        }
+      } else {
+        this.fee = money
+        this.type = type;
       }
     },
     async getFeePowerList() {
-      var user= window.sessionStorage.getItem("user")
-      this.queryInfo.ownerid=user
+      let user = window.sessionStorage.getItem("user")
+      this.queryInfo.ownerid = user
       let {data: res} = await this.$http.get("feePower", {params: this.queryInfo})
       this.fee_power = res.data;
       this.power_total = res.numbers;
@@ -224,17 +256,7 @@ export default {
       this.queryInfo.pageNum = newPage;
       this.getUserList();
     },
-    async userStateChange(userInfo) {
-      let formData = new FormData();
-      formData.append("userid", userInfo.userid);
-      formData.append("status", userInfo.status);
-      let {data: res} = await this.$http.put("user/status", formData)
-      if (res !== "success") {
-        userInfo.id = !userInfo.id;
-        return this.$message.error("修改失败")
-      }
-      this.$message.success("修改成功")
-    },
+
   }
 }
 </script>
