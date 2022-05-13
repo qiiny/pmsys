@@ -13,9 +13,10 @@ import UserLogin from "../components/UserLogin";
 import Register from "../components/Register";
 import * as path from "path";
 import Welcome from "../components/Welcome";
-import test2 from "../components/User/Test";
+import test2 from "../components/User/edit";
 import Details from "../components/User/Details";
 import Complaint from "../components/User/complaint";
+import Article from "../components/User/article";
 
 Vue.use(VueRouter)
 
@@ -53,8 +54,9 @@ const routes = [
             {path: "/repair", component: UserRepair},
             {path: "/index", component: index},
             {path: "/test", component: test2},
-            {path: "/detail",component: Details},
+            {path: "/details",component: Details},
             {path: "/tousu",component: Complaint},
+            {path: "/article",component: Article},
 
         ]
     }

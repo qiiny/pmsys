@@ -1,9 +1,18 @@
 <template>
-  <div>
+  <div class="edit">
+    <div class="font">
+      <span>输入标题</span>
+    </div>
+    <el-input v-model="input" placeholder="请输入内容"></el-input>
+    <hr>
+    <div class="font">
+      <span>输入正文</span>
+    </div>
     <quilleditor v-model="content"
                  ref="myTextEditor"
                  :options="editorOption"
                  @change="onChange"
+                 style="background-color: white"
     >
       <div id="toolbar" slot="toolbar">
         <select class="ql-size">
@@ -32,13 +41,9 @@
         <span class="ql-formats"><button type="button" class="ql-video"></button></span>
       </div>
     </quilleditor>
+    <el-button @click="test" style="float: right" >预览</el-button>
     <el-button @click="tijiao" style="float: right">提交</el-button>
-    <div>
-      <br>
-      <span>预览:</span>
-      <p v-html="content">
-      </p>
-    </div>
+
   </div>
 </template>
 <script>
@@ -64,10 +69,13 @@ export default {
       type: String,
       default: 'file'
     },
-    maxUploadSize:{
-      type:Number,
+    maxUploadSize: {
+      type: Number,
       default: 1024 * 1024 * 500
     }
+  },
+  created() {
+    this.test()
   },
   data() {
     return {
@@ -80,8 +88,12 @@ export default {
     }
   },
   methods: {
-    tijiao(){
+    tijiao() {
       console.log(this.content)
+    },
+    test(){
+      let user = window.sessionStorage.getItem("userInfo")
+      console.log(JSON.parse(user).username)
     },
     onChange() {
       this.$emit('input', this.content)
@@ -147,3 +159,12 @@ export default {
 }
 
 </script>
+<style>
+.font {
+  font-size: 16px;
+  margin: 12px auto;
+}
+.edit{
+  /*background-color: white;*/
+}
+</style>

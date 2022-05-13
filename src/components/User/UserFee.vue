@@ -160,6 +160,7 @@ export default {
     this.getFeePowerList(),
         this.getFeeWaterList(),
         this.getFeeProperty()
+
   },
   data() {
     return {
@@ -183,6 +184,7 @@ export default {
     }
   },
   methods: {
+
     async pay(money, type) {
 
       this.DialogVisible = !this.DialogVisible;

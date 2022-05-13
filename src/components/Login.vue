@@ -73,6 +73,7 @@ export default {
           if (res.flag === "ok") {
             console.log(res.user)
             window.sessionStorage.setItem("user", res.user.ownerid)
+            sessionStorage.setItem("userInfo",JSON.stringify(res.user))
             this.$message.success("登录成功")
             await this.$router.push({path: "/index"})
           } else {
