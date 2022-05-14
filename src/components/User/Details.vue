@@ -1,11 +1,15 @@
 <template>
   <div>
-    <el-card>
-      <p v-html="content"></p>
-    </el-card>
+    <div style="text-align: center">
+      <h1>{{article.title}}</h1>
+      <p>作者{{article.author}}</p>
+      <p>发布时间{{article.createtime}}</p>
+      <hr>
+    </div>
+    <p v-html="article.content"></p>
     <div v-clickoutside="hideReplyBtn" @click="inputFocus" class="my-reply">
-      <el-avatar class="header-img" :size="40" :src="myHeader"></el-avatar>
-      <div class="reply-info">
+      <el-avatar class="header-img" :size="40" :src="avater"></el-avatar>
+      <div class="reply-info" >
         <div
             tabindex="0"
             contenteditable="true"
@@ -19,41 +23,39 @@
         </div>
       </div>
       <div class="reply-btn-box" v-show="btnShow">
-        <el-button class="reply-btn" size="medium" @click="sendComment" type="primary">发表评论</el-button>
+        <el-button class="reply-btn" size="medium" @click="sendcontent" type="primary">发表评论</el-button>
       </div>
     </div>
-    <div v-for="(item,i) in comments" :key="i" class="author-title reply-father">
-      <el-avatar class="header-img" :size="40" :src="item.headImg"></el-avatar>
+    <div v-for="(item,i) in contents" :key="i" class="author-title reply-father">
+      <el-avatar class="header-img" :size="40" :src="item.avater"></el-avatar>
       <div class="author-info">
-        <span class="author-name">{{ item.name }}</span>
-        <span class="author-time">{{ item.time }}</span>
+        <span class="author-name">{{item.name}}</span>
+        <span class="author-time">{{item.time}}</span>
       </div>
       <div class="icon-btn">
-        <span @click="showReplyInput(i,item.name,item.id)"><i
-            class="el-icon-s-comment"></i>{{ item.commentNum }}</span>
-        <i class="el-icon-caret-top"></i>{{ item.like }}
+        <span @click="showReplyInput(i,item.name,item.id)"><i class="iconfont el-icon-s-content"></i>{{item.commentNum}}</span>
+        <i class="iconfont el-icon-caret-top"></i>{{item.like}}
       </div>
       <div class="talk-box">
         <p>
-          <span class="reply">{{ item.comment }}</span>
+          <span class="reply">{{item.content}}</span>
         </p>
       </div>
       <div class="reply-box">
         <div v-for="(reply,j) in item.reply" :key="j" class="author-title">
-          <el-avatar class="header-img" :size="40" :src="reply.fromHeadImg"></el-avatar>
+          <el-avatar class="header-img" :size="40" :src="reply.avater"></el-avatar>
           <div class="author-info">
-            <span class="author-name">{{ reply.from }}</span>
-            <span class="author-time">{{ reply.time }}</span>
+            <span class="author-name">{{reply.name}}</span>
+            <span class="author-time">{{reply.time}}</span>
           </div>
           <div class="icon-btn">
-            <span @click="showReplyInput(i,reply.from,reply.id)"><i
-                class="el-icon-s-comment"></i>{{ reply.commentNum }}</span>
-            <i class="el-icon-caret-top"></i>{{ reply.like }}
+            <span @click="showReplyInput(i,reply.from,reply.id)"><i class="iconfont el-icon-s-content"></i>{{reply.commentNum}}</span>
+            <i class="iconfont el-icon-caret-top"></i>{{reply.like}}
           </div>
           <div class="talk-box">
             <p>
-              <span>回复 {{ reply.to }}:</span>
-              <span class="reply">{{ reply.comment }}</span>
+              <span>回复 {{reply.to}}:</span>
+              <span class="reply">{{reply.content}}</span>
             </p>
           </div>
           <div class="reply-box">
@@ -61,14 +63,13 @@
           </div>
         </div>
       </div>
-      <div v-show="_inputShow(i)" class="my-reply my-comment-reply">
-        <el-avatar class="header-img" :size="40" :src="myHeader"></el-avatar>
-        <div class="reply-info">
-          <div tabindex="0" contenteditable="true" spellcheck="false" placeholder="输入评论..." @input="onDivInput($event)"
-               class="reply-input reply-comment-input"></div>
+      <div  v-show="_inputShow(i)" class="my-reply my-content-reply">
+        <el-avatar class="header-img" :size="40" :src="avater"></el-avatar>
+        <div class="reply-info" >
+          <div tabindex="0" contenteditable="true" spellcheck="false" placeholder="输入评论..."   @input="onDivInput($event)"  class="reply-input reply-content-input"></div>
         </div>
         <div class=" reply-btn-box">
-          <el-button class="reply-btn" size="medium" @click="sendCommentReply(i,j)" type="primary">发表评论</el-button>
+          <el-button class="reply-btn" size="medium" @click="sendcontentReply(i,j)" type="primary">发表评论</el-button>
         </div>
       </div>
     </div>
@@ -91,13 +92,11 @@ const clickoutside = {
         binding.value(e);
       }
     }
-
     // 给当前元素绑定个私有变量，方便在unbind中可以解除事件监听
     el.vueClickOutside = documentHandler;
     document.addEventListener('click', documentHandler);
   },
-  update() {
-  },
+  update() {},
   unbind(el, binding) {
     // 解除事件监听
     document.removeEventListener('click', el.vueClickOutside);
@@ -105,166 +104,218 @@ const clickoutside = {
   },
 };
 export default {
-  name: 'ArticleComment',
-  data() {
-    return {
+  name:'Articlecontent',
+  created() {
+    this.init()
+    this.getComment()
+  },
+  data(){
+    return{
+      article:"",
       btnShow: false,
-      index: '0',
-      replyComment: '',
-      myName: 'Lana Del Rey',
-      myHeader: 'https://ae01.alicdn.com/kf/Hd60a3f7c06fd47ae85624badd32ce54dv.jpg',
-      myId: 19870621,
-      to: '',
-      toId: -1,
-      comments: [
+      index:'0',
+      replycontent:'',
+      name:'Lana Del Rey',
+      avater:'https://ae01.alicdn.com/kf/Hd60a3f7c06fd47ae85624badd32ce54dv.jpg',
+      id:19870621,
+      to:'',
+      toId:-1,
+      contents:[
         {
-          name: 'Lana Del Rey',
-          id: 19870621,
-          headImg: 'https://ae01.alicdn.com/kf/Hd60a3f7c06fd47ae85624badd32ce54dv.jpg',
-          comment: '很好的文章',
-          time: '2022年3月16日 18:43',
-          commentNum: 2,
-          like: 15,
-          inputShow: false,
-          reply: [
+          name:'Lana Del Rey',
+          id:19870621,
+          avater:'https://ae01.alicdn.com/kf/Hd60a3f7c06fd47ae85624badd32ce54dv.jpg',
+          content:'我发布一张新专辑Norman Fucking Rockwell,大家快来听啊',
+          time:'2019年9月16日 18:43',
+          contentNum:2,
+          like:15,
+          inputShow:false,
+          reply:[
             {
-              from: 'Taylor Swift',
-              fromId: 19891221,
-              fromHeadImg: 'https://ae01.alicdn.com/kf/H94c78935ffa64e7e977544d19ecebf06L.jpg',
-              to: 'Lana Del Rey',
-              toId: 19870621,
-              comment: '确实，我也喜欢',
-              time: '2022年3月16日 18:43',
-              commentNum: 1,
-              like: 15,
-              inputShow: false
+              name:'Taylor Swift',
+              id:19891221,
+              avater:'https://ae01.alicdn.com/kf/H94c78935ffa64e7e977544d19ecebf06L.jpg',
+              to:'Lana Del Rey',
+              toId:19870621,
+              content:'我很喜欢你的新专辑！！',
+              time:'2019年9月16日 18:43',
+              contentNum:1,
+              like:15,
+              inputShow:false
             },
             {
-              from: 'Ariana Grande',
-              fromId: 1123,
-              fromHeadImg: 'https://ae01.alicdn.com/kf/Hf6c0b4a7428b4edf866a9fbab75568e6U.jpg',
-              to: 'Lana Del Rey',
-              toId: 19870621,
-              comment: '俱往矣，数风流人物，还看今朝。',
-              time: '2022年3月16日 18:43',
-              commentNum: 0,
-              like: 5,
-              inputShow: false
+              name:'Ariana Grande',
+              id:1123,
+              avater:'https://ae01.alicdn.com/kf/Hf6c0b4a7428b4edf866a9fbab75568e6U.jpg',
+              to:'Lana Del Rey',
+              toId:19870621,
+              content:'别忘记宣传我们的合作单曲啊',
+              time:'2019年9月16日 18:43',
+              contentNum:0,
+              like:5,
+              inputShow:false
             }
           ]
         },
-      ],
-      content:"<p><img src=\"http://localhost:9000/img/test/16484061344617e20bebc7675ba0d5b8049c136ce1ff0.jpeg\"></p><p>北国风光，千里冰封，万里雪飘。</p><p>望长城内外，惟余莽莽；大河上下，顿失滔滔。</p><p>山舞银蛇，原驰蜡象，欲与天公试比高。</p><p>须晴日，看红装素裹，分外妖娆。</p><p>江山如此多娇，引无数英雄竞折腰。</p><p><span style=\"color: rgb(204, 0, 0);\">惜秦皇汉武，</span>略输文采；唐宗宋祖，稍逊风骚。</p><p>一代天骄，成吉思汗，只识弯弓射大雕。</p><p>俱往矣，数风流人物，还看今朝。</p>",
+        {
+          name:'Taylor Swift',
+          id:19891221,
+          avater:'https://ae01.alicdn.com/kf/H94c78935ffa64e7e977544d19ecebf06L.jpg',
+          content:'我发行了我的新专辑Lover',
+          time:'2019年9月16日 18:43',
+          contentNum:1,
+          like:5,
+          inputShow:false,
+          reply:[
+            {
+              name:'Lana Del Rey',
+              id:19870621,
+              avater:'https://ae01.alicdn.com/kf/Hd60a3f7c06fd47ae85624badd32ce54dv.jpg',
+              to:'Taylor Swift',
+              toId:19891221,
+              content:'新专辑和speak now 一样棒！',
+              time:'2019年9月16日 18:43',
+              contentNum:25,
+              like:5,
+              inputShow:false
+
+            }
+          ]
+        },
+        {
+          name:'Norman Fucking Rockwell',
+          id:20190830,
+          avater:'https://ae01.alicdn.com/kf/Hdd856ae4c81545d2b51fa0c209f7aa28Z.jpg',
+          content:'Plz buy Norman Fucking Rockwell on everywhere',
+          time:'2019年9月16日 18:43',
+          contentNum:0,
+          like:5,
+          inputShow:false,
+          reply:[]
+        },
+      ]
     }
   },
   directives: {clickoutside},
   methods: {
-    inputFocus() {
+    init(){
+      this.article= JSON.parse(window.sessionStorage.getItem("article"))
+      console.log(this.article.content)
+    },
+    async getComment() {
+      // let {data: res} = await this.$http.get("feeWater?ownerId="+this.queryInfo.ownerid+"&PayMonth="+this.queryInfo.PayMonth+"&pageNum="+this.queryInfo.pageNum+"&pageSize="+this.queryInfo.pageSize)
+      let {data: res} = await this.$http.get("comment")
+      this.contents=res
+
+    },
+    inputFocus(){
       var replyInput = document.getElementById('replyInput');
-      replyInput.style.padding = "8px 8px"
-      replyInput.style.border = "2px solid blue"
+      replyInput.style.padding= "8px 8px"
+      replyInput.style.border ="2px solid blue"
       replyInput.focus()
     },
-    showReplyBtn() {
+    showReplyBtn(){
       this.btnShow = true
     },
-    hideReplyBtn() {
+    hideReplyBtn(){
+      var replyInput = document.getElementById('replyInput');
       this.btnShow = false
-      replyInput.style.padding = "10px"
-      replyInput.style.border = "none"
+      replyInput.style.padding= "10px"
+      replyInput.style.border ="none"
     },
-    showReplyInput(i, name, id) {
-      this.comments[this.index].inputShow = false
-      this.index = i
-      this.comments[i].inputShow = true
+    showReplyInput(i,name,id){
+      this.contents[this.index].inputShow = false
+      this.index =i
+      this.contents[i].inputShow = true
       this.to = name
       this.toId = id
     },
-    _inputShow(i) {
-      return this.comments[i].inputShow
+    _inputShow(i){
+      return this.contents[i].inputShow
     },
-    sendComment() {
-      if (!this.replyComment) {
+    sendcontent(){
+      if(!this.replycontent){
         this.$message({
           showClose: true,
-          type: 'warning',
-          message: '评论不能为空'
+          type:'warning',
+          message:'评论不能为空'
         })
-      } else {
-        let a = {}
-        let input = document.getElementById('replyInput')
+      }else{
+        let a ={}
+        let input =  document.getElementById('replyInput')
         let timeNow = new Date().getTime();
-        let time = this.dateStr(timeNow);
-        a.name = this.myName
-        a.comment = this.replyComment
-        a.headImg = this.myHeader
+        let time= this.dateStr(timeNow);
+        a.name= this.name
+        a.content =this.replycontent
+        a.avater = this.avater
         a.time = time
         a.commentNum = 0
         a.like = 0
-        this.comments.push(a)
-        this.replyComment = ''
+        a.reply=[]
+        this.contents.push(a)
+        console.log(a)
+        this.replycontent = ''
         input.innerHTML = '';
-        console.log(this.comments)
 
       }
     },
-    sendCommentReply(i, j) {
-      if (!this.replyComment) {
+    sendcontentReply(i,j){
+      if(!this.replycontent){
         this.$message({
           showClose: true,
-          type: 'warning',
-          message: '评论不能为空'
+          type:'warning',
+          message:'评论不能为空!'
         })
-      } else {
-        let a = {}
+      }else{
+        let a ={}
         let timeNow = new Date().getTime();
-        let time = this.dateStr(timeNow);
-        a.from = this.myName
+        let time= this.dateStr(timeNow);
+        a.name= this.name
         a.to = this.to
-        a.fromHeadImg = this.myHeader
-        a.comment = this.replyComment
+        a.toId=this.toId
+        a.avater = this.avater
+        a.content =this.replycontent
         a.time = time
         a.commentNum = 0
         a.like = 0
-        this.comments[i].reply.push(a)
-        this.replyComment = ''
-        document.getElementsByClassName("reply-comment-input")[i].innerHTML = ""
+        console.log(a)
+        this.contents[i].reply.push(a)
+        this.replycontent = ''
+        document.getElementsByClassName("reply-content-input")[i].innerHTML = ""
       }
     },
-    onDivInput: function (e) {
-      this.replyComment = e.target.innerHTML;
+    onDivInput: function(e) {
+      this.replycontent = e.target.innerHTML;
     },
-    dateStr(date) {
+    dateStr(date){
       //获取js 时间戳
-      var time = new Date().getTime();
+      var time=new Date().getTime();
       //去掉 js 时间戳后三位，与php 时间戳保持一致
-      time = parseInt((time - date) / 1000);
+      time=parseInt((time-date)/1000);
       //存储转换值
       var s;
-      if (time < 60 * 10) {//十分钟内
+      if(time<60*10){//十分钟内
         return '刚刚';
-      } else if ((time < 60 * 60) && (time >= 60 * 10)) {
+      }else if((time<60*60)&&(time>=60*10)){
         //超过十分钟少于1小时
-        s = Math.floor(time / 60);
-        return s + "分钟前";
-      } else if ((time < 60 * 60 * 24) && (time >= 60 * 60)) {
+        s = Math.floor(time/60);
+        return  s+"分钟前";
+      }else if((time<60*60*24)&&(time>=60*60)){
         //超过1小时少于24小时
-        s = Math.floor(time / 60 / 60);
-        return s + "小时前";
-      } else if ((time < 60 * 60 * 24 * 30) && (time >= 60 * 60 * 24)) {
+        s = Math.floor(time/60/60);
+        return  s+"小时前";
+      }else if((time<60*60*24*30)&&(time>=60*60*24)){
         //超过1天少于30天内
-        s = Math.floor(time / 60 / 60 / 24);
-        return s + "天前";
-      } else {
+        s = Math.floor(time/60/60/24);
+        return s+"天前";
+      }else{
         //超过30天ddd
-        var date = new Date(parseInt(date));
-        return date.getFullYear() + "/" + (date.getMonth() + 1) + "/" + date.getDate();
+        var date= new Date(parseInt(date));
+        return date.getFullYear()+"/"+(date.getMonth()+1)+"/"+date.getDate();
       }
     }
   },
 }
-
-
 </script>
 
 <style lang="less" scoped>
@@ -315,11 +366,11 @@ export default {
   float: right;
   margin-right: 15px;
 }
-.my-comment-reply {
+.my-content-reply {
   margin-left: 50px;
 }
-.my-comment-reply .reply-input {
-  width: auto;
+.my-content-reply .reply-input {
+  width: flex;
 }
 .author-title:not(:last-child) {
   border-bottom: 1px solid rgba(178,186,194,0.3);

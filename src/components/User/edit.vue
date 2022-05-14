@@ -1,14 +1,20 @@
 <template>
   <div class="edit">
-    <div class="font">
-      <span>输入标题</span>
-    </div>
-    <el-input v-model="input" placeholder="请输入内容"></el-input>
+  <div class="font">
+    <p>请输入标题</p>
+  </div>
+    <el-form :model="form"
+             :rules="addFormRules"
+             ref="addFormRules"
+             label-width="80px"
+             label-position="right">
+      <el-input v-model="form.title" placeholder="请输入内容" style="width: 100%"></el-input>
+    </el-form>
     <hr>
     <div class="font">
       <span>输入正文</span>
     </div>
-    <quilleditor v-model="content"
+    <quilleditor v-model="form.content"
                  ref="myTextEditor"
                  :options="editorOption"
                  @change="onChange"
@@ -41,9 +47,11 @@
         <span class="ql-formats"><button type="button" class="ql-video"></button></span>
       </div>
     </quilleditor>
-    <el-button @click="test" style="float: right" >预览</el-button>
+    <el-button @click="editDialogVisible=true" style="float: right">预览</el-button>
     <el-button @click="tijiao" style="float: right">提交</el-button>
-
+    <el-dialog title="预览" :visible.sync="editDialogVisible">
+      <p v-html="this.form.content"></p>
+    </el-dialog>
   </div>
 </template>
 <script>
@@ -51,7 +59,6 @@ import 'quill/dist/quill.core.css'
 import 'quill/dist/quill.snow.css'
 import 'quill/dist/quill.bubble.css'
 import {quillEditor} from "vue-quill-editor";
-
 
 export default {
   name: "v-editor",
@@ -85,18 +92,39 @@ export default {
           toolbar: '#toolbar'
         }
       },
+      editDialogVisible: false,
+      form: {
+        author: "",
+        title: "",
+        content: "",
+        createtime: "",
+      },
+      addFormRules: {
+        title: [
+          {required: true, message: "请输入标题", trigger: 'blur'},
+          {min: 2, max: 15, message: "请输入2到15个字符", trigger: "blur"}
+        ],
+      }
     }
   },
   methods: {
     tijiao() {
-      console.log(this.content)
-    },
-    test(){
       let user = window.sessionStorage.getItem("userInfo")
-      console.log(JSON.parse(user).username)
+      this.form.author = JSON.parse(user).username
+      this.form.createtime = new Date()
+      this.$refs.addFormRules.validate(async valid => {
+        if (!valid) return;
+        let {data: res} = await this.$http.post("article", this.form);
+        if (res !== "success") {
+          return this.$message.error("添加失败");
+        }
+        this.$message.success("添加成功")
+        await this.$router.push("/article")
+      })
     },
+
     onChange() {
-      this.$emit('input', this.content)
+      this.$emit('input', this.form.content)
     },
     /*选择上传图片切换*/
     onFileChange(e) {
@@ -145,26 +173,26 @@ export default {
     'quilleditor': quillEditor
   },
   mounted() {
-    this.content = this.value
+    this.form.content = this.value
   },
   watch: {
     'value'(newVal, oldVal) {
       if (this.editor) {
-        if (newVal !== this.content) {
+        if (newVal !== this.form.content) {
           this.content = newVal
         }
       }
     },
   }
 }
-
 </script>
 <style>
 .font {
   font-size: 16px;
   margin: 12px auto;
 }
-.edit{
+
+.edit {
   /*background-color: white;*/
 }
 </style>

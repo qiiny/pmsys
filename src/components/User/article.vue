@@ -1,44 +1,35 @@
 <template>
   <div>
-    <el-card style="width: 80%;margin:12px auto" shadow="hover" @click.native="f">
-      <h2>标题</h2>
+    <el-card style="width: 80%;margin:12px auto" shadow="hover" @click.native="f(site)" v-for="site in articleList">
+      <h2>{{ site.title }}</h2>
       <div style="font-size: 12px">
-        <p style="text-align:right">作者：jack</p>
-        <p style="text-align:right">发布时间：jack</p>
+        <p style="text-align:right">作者：{{ site.author }}</p>
+        <p style="text-align:right">发布时间：{{ site.createtime }}</p>
       </div>
       <HR/>
-      <p>{{ this.filtersText(this.content) }}</p>
-      <img v-if="this.img.length>0" :src="img[0]" width="480" height="320">
-    </el-card>
-    <el-card style="width: 80%;margin:12px auto">
-      <h3>标题</h3>
-      <HR/>
-      <p>内容内容内容内容内容内容内容</p>
-    </el-card>
-    <el-card style="width: 80%;margin:12px auto">
-      <h3>标题</h3>
-      <HR/>
-      <p>内容内容内容内容内容内容内容</p>
-    </el-card>
-    <el-card style="width: 80%;margin:12px auto">
-      <h3>标题</h3>
-      <HR/>
-      <p>内容内容内容内容内容内容内容</p>
+      <p class="content">{{ site.content.replace(/<[^>]+>/g, "") }}</p>
+      <img v-if="getImgSrc(site.content)" :src="getImgSrc(site.content)" width="50%" height="50%">
     </el-card>
   </div>
-
 
 </template>
 
 <script>
 export default {
   created() {
-    this.img = this.getImgSrc(this.content)
+    this.getAllComplaint()
   },
   data() {
     return {
-      content: "<p><img src=\"http://localhost:9000/img/test/16484061344617e20bebc7675ba0d5b8049c136ce1ff0.jpeg\"></p><p>北国风光，千里冰封，万里雪飘。</p><p>望长城内外，惟余莽莽；大河上下，顿失滔滔。</p><p>山舞银蛇，原驰蜡象，欲与天公试比高。</p><p>须晴日，看红装素裹，分外妖娆。</p><p>江山如此多娇，引无数英雄竞折腰。</p><p><span style=\"color: rgb(204, 0, 0);\">惜秦皇汉武，</span>略输文采；唐宗宋祖，稍逊风骚。</p><p>一代天骄，成吉思汗，只识弯弓射大雕。</p><p>俱往矣，数风流人物，还看今朝。</p>",
-      img: [],
+      //查询实体
+      queryInfo: {
+        title: "",
+        pageNum: 1,
+        pageSize: 5,
+      },
+      articleList: [],
+      total: 0,
+
     }
   },
   methods: {
@@ -47,19 +38,40 @@ export default {
       rich.replace(/<img [^>]*src=['"]([^'"]+)[^>]*>/g, (match, capture) => {
         imgList.push(capture);
       });
-      console.log(imgList)
-      return imgList;
+      return imgList[0];
     },
     filtersText(val) {
       return val.replace(/<[^>]+>/g, "");
     },
-    f(){
+    f(item) {
       this.$router.push("/details")
-    }
+      window.sessionStorage.setItem("article", JSON.stringify(item))
+    },
+    //获取所有用户
+    async getAllComplaint() {
+      // let {data: res} = await this.$http.get("feeWater?ownerId="+this.queryInfo.ownerid+"&PayMonth="+this.queryInfo.PayMonth+"&pageNum="+this.queryInfo.pageNum+"&pageSize="+this.queryInfo.pageSize)
+      let {data: res} = await this.$http.get("article", {params: this.queryInfo})
+      this.articleList = res.data;
+      this.total = res.numbers;
+    },
+    //最大数
+    handleSizeChange(newSize) {
+      this.queryInfo.pageSize = newSize;
+      this.getAllComplaint();
+    },
+    //pageNum触发动作
+    handleCurrentChange(newPage) {
+      this.queryInfo.pageNum = newPage;
+      this.getAllComplaint();
+    },
   }
 }
 </script>
 
 <style scoped>
-
+.content {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
 </style>

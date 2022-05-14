@@ -202,9 +202,9 @@ export default {
     },
     async userStateChange(userInfo) {
       let formData = new FormData();
-      formData.append("userid", userInfo.repairid);
-      formData.append("status", userInfo.isrepair);
-      let {data: res} = await this.$http.put("user/status", formData)
+      formData.append("repairid", userInfo.repairid);
+      formData.append("isrepair", userInfo.isrepair);
+      let {data: res} = await this.$http.put("repair/status", formData)
       if (res !== "success") {
         userInfo.id = !userInfo.id;
         return this.$message.error("修改失败")
